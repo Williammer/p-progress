@@ -12,8 +12,10 @@ const sum = iterable => {
 };
 
 class PProgress extends Promise {
+	// !! `fn` is like a "composing/curry" function
+	// it has injected the executor handler and return value into the pProgress
 	static fn(input) {
-		return (...args) => {
+		return (...args) => { // !! this ...args makes it flexible to pass input or nothing when invoke the promise
 			return new PProgress((resolve, reject, progress) => {
 				args.push(progress);
 				input(...args).then(resolve, reject);
@@ -24,10 +26,10 @@ class PProgress extends Promise {
 	static all(promises, options) {
 		return PProgress.fn(progress => {
 			const progressMap = new Map();
-			const iterator = promises[Symbol.iterator]();
+			const iterator = promises[Symbol.iterator](); // get the `iterator` essence from Array
 
 			const reportProgress = () => {
-				progress(sum(progressMap) / promises.length);
+				progress(sum(progressMap) / promises.length); // average the progress per promise
 			};
 
 			const mapper = async () => {
@@ -53,7 +55,7 @@ class PProgress extends Promise {
 		})();
 	}
 
-	constructor(executor) {
+	constructor(executor) { // `executor` enables the multi-layer control.
 		const progressFn = progress => {
 			if (progress > 1 || progress < 0) {
 				throw new TypeError('The progress percentage should be a number between 0 and 1');
